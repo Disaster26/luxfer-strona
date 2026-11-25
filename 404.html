@@ -404,6 +404,12 @@ body.menu-o .menu-b span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
  .pas-h .strz{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+.woj{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:0;padding:0;list-style:none}
+.woj li{border:1px solid var(--ink);background:#fff;padding:20px 22px;border-left:4px solid var(--red,#c4161c)}
+.woj b{display:block;font:700 18px/1.25 Montserrat,MontFB,sans-serif;margin:0 0 6px}
+.woj span{display:block;color:var(--mu);font-size:15px;line-height:1.5}
+@media (max-width:860px){.woj{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.woj{grid-template-columns:1fr}}
 </style>
 
 </head>
