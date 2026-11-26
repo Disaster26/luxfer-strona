@@ -43,18 +43,20 @@
   });
   // powiekszenie z siatek, paskow i pojedynczych zdjec
   d.querySelectorAll('[data-lb]').forEach(function(g){
-    g.addEventListener('click',function(e){var im=e.target.closest('img');if(!im||!lb)return;var imgs=[].slice.call(g.querySelectorAll('img'));otworz(g,imgs.indexOf(im));});
+    g.addEventListener('click',function(e){var a=e.target.closest('a.lba,figure');if(!a||!lb||!g.contains(a))return;var im=a.querySelector('img')||e.target.closest('img');if(!im)return;e.preventDefault();var imgs=[].slice.call(g.querySelectorAll('img'));otworz(g,imgs.indexOf(im));});
   });
 
   var lb=d.getElementById('lb'),lt,lc,ostatni;
   function otworz(t,i){
     ostatni=d.activeElement;
     lt=lb.querySelector('.lb-t');lc=lb.querySelector('.lb-c');lt.innerHTML='';
-    [].forEach.call(t.querySelectorAll('img'),function(im){var f=d.createElement('figure'),m=d.createElement('img'),c=d.createElement('figcaption');m.src=im.getAttribute('data-full');m.alt=im.alt;m.decoding='async';c.textContent=im.alt;f.appendChild(m);f.appendChild(c);lt.appendChild(f);});
+    [].forEach.call(t.querySelectorAll('img'),function(im){var f=d.createElement('figure'),m=d.createElement('img'),c=d.createElement('figcaption');m.setAttribute('data-s',im.getAttribute('data-full'));m.alt=im.alt;m.decoding='async';c.textContent=im.alt;f.appendChild(m);f.appendChild(c);lt.appendChild(f);});
+    wczytaj(i);
     lb.hidden=false;b.style.overflow='hidden';
     requestAnimationFrame(function(){lt.scrollLeft=i*lt.clientWidth;licz();lb.querySelector('.lx').focus();});
   }
-  function licz(){if(lc&&lt)lc.textContent=(Math.round(lt.scrollLeft/lt.clientWidth)+1)+' / '+lt.children.length;}
+  function wczytaj(i){for(var k=i-1;k<=i+1;k++){var f=lt.children[k];if(!f)continue;var m=f.querySelector('img');if(m&&!m.src&&m.getAttribute('data-s'))m.src=m.getAttribute('data-s');}}
+  function licz(){if(!lt)return;var i=Math.round(lt.scrollLeft/lt.clientWidth);wczytaj(i);if(lc)lc.textContent=(i+1)+' / '+lt.children.length;}
   function zamknij(){lb.hidden=true;b.style.overflow='';if(ostatni)ostatni.focus();}
   if(lb){
     lb.querySelector('.lx').addEventListener('click',zamknij);
@@ -62,7 +64,7 @@
     lb.querySelector('.ln').addEventListener('click',function(){lt.scrollBy({left:lt.clientWidth,behavior:'smooth'});});
     lb.querySelector('.lb-t').addEventListener('scroll',function(){requestAnimationFrame(licz);},{passive:true});
     lb.addEventListener('click',function(e){if(e.target.tagName==='FIGURE')zamknij();});
-    d.addEventListener('keydown',function(e){if(lb.hidden)return;if(e.key==='Escape')zamknij();if(e.key==='ArrowRight')lt.scrollBy({left:lt.clientWidth,behavior:'smooth'});if(e.key==='ArrowLeft')lt.scrollBy({left:-lt.clientWidth,behavior:'smooth'});});
+    d.addEventListener('keydown',function(e){if(lb.hidden)return;if(e.key==='Tab'){var bs=[].slice.call(lb.querySelectorAll('button')),k=bs.indexOf(d.activeElement);e.preventDefault();bs[(k+(e.shiftKey?bs.length-1:1))%bs.length].focus();return;}if(e.key==='Escape')zamknij();if(e.key==='ArrowRight')lt.scrollBy({left:lt.clientWidth,behavior:'smooth'});if(e.key==='ArrowLeft')lt.scrollBy({left:-lt.clientWidth,behavior:'smooth'});});
   }
 
   // formularz (wersja testowa: bez wysylki)
@@ -72,14 +74,15 @@
     var tm=new URLSearchParams(location.search).get('temat');
     if(tm){var s=f.querySelector('select[name=temat]');if(s){[].forEach.call(s.options,function(o){if(o.value===tm)s.value=tm;});}}
     f.addEventListener('submit',function(e){e.preventDefault();
-      if(!f.checkValidity()){info.className='bl';info.textContent='Uzupełnij pola oznaczone gwiazdką i zaznacz zgodę na kontakt.';var z=f.querySelector(':invalid');if(z)z.focus();return;}
+      var zle=[].filter.call(f.querySelectorAll('input,textarea,select'),function(x){var ok=x.checkValidity();x.setAttribute('aria-invalid',ok?'false':'true');return !ok;});
+      if(zle.length){info.className='bl';info.textContent='Popraw: '+zle.map(function(x){var l=f.querySelector('label[for="'+x.id+'"]');return l?l.textContent.replace(' *','').toLowerCase():x.name;}).join(', ')+(f.querySelector('#f-tel[aria-invalid=true]')?' (telefon: co najmniej 9 cyfr)':'')+'.';zle[0].focus();return;}
       info.className='ok';info.textContent='To wersja testowa strony. Formularz zacznie wysyłać wiadomości po uruchomieniu na luxfer.net.pl, do tego czasu zapraszamy pod numer 501 338 623.';});
   }
 
   // zgody cookies, mapa i modul Facebooka
   var KL='lx-zgoda',c=d.getElementById('cookies');
-  function zgoda(){try{return localStorage.getItem(KL);}catch(e){return null;}}
-  function zapisz(v){try{localStorage.setItem(KL,v);}catch(e){}if(c)c.hidden=true;if(v!=='nie')zewn(true);}
+  function zgoda(){try{var z=JSON.parse(localStorage.getItem(KL)||'null');return z&&z.t&&Date.now()-z.t<31536000000?z.v:null;}catch(e){return null;}}
+  function zapisz(v){try{localStorage.setItem(KL,JSON.stringify({v:v,t:Date.now()}));}catch(e){}if(c)c.hidden=true;if(v==='tak')zewn(true);}
   if(c){
     c.querySelector('[data-c=tak]').addEventListener('click',function(){zapisz('tak');});
     c.querySelector('[data-c=nie]').addEventListener('click',function(){zapisz('nie');});
@@ -88,7 +91,7 @@
     zap.addEventListener('click',function(){zapisz(c.querySelector('#zg-zew').checked?'tak':'nie');});
   }
   d.querySelectorAll('[data-cookies]').forEach(function(x){x.addEventListener('click',function(){if(c)c.hidden=false;});});
-  function wstaw(m){if(m.querySelector('iframe'))return;var i=d.createElement('iframe'),u=m.getAttribute('data-src');if(m.classList.contains('fb')){var sz=Math.max(180,Math.min(500,Math.floor(m.clientWidth)));u=u.replace('width=500','width='+sz).replace('height=600','height='+Math.floor(m.clientHeight));}i.src=u;i.title=m.getAttribute('data-t');i.loading='lazy';i.referrerPolicy='no-referrer-when-downgrade';if(m.classList.contains('fb'))i.setAttribute('scrolling','no');m.appendChild(i);var z=m.querySelector('.mapa-z,.fb-z');if(z)z.remove();}
+  function wstaw(m){if(m.querySelector('iframe'))return;var i=d.createElement('iframe'),u=m.getAttribute('data-src');if(m.classList.contains('fb')){var sz=Math.max(180,Math.min(500,Math.floor(m.clientWidth)));u=u.replace('width=500','width='+sz).replace('height=600','height='+Math.max(520,Math.floor(m.clientHeight)));}i.src=u;i.title=m.getAttribute('data-t');i.loading='lazy';i.referrerPolicy='no-referrer-when-downgrade';if(m.classList.contains('fb'))i.setAttribute('scrolling','no');m.appendChild(i);var z=m.querySelector('.mapa-z,.fb-z');if(z)z.remove();}
   function zewn(teraz){
     d.querySelectorAll('[data-src]').forEach(function(m){
       var bt=m.querySelector('button');if(bt)bt.onclick=function(){wstaw(m);};
