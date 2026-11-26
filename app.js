@@ -90,6 +90,10 @@
     ust.addEventListener('click',function(){pan.hidden=false;ust.hidden=true;zap.hidden=false;});
     zap.addEventListener('click',function(){zapisz(c.querySelector('#zg-zew').checked?'tak':'nie');});
   }
+
+  // wysokosc banera cookies -> --cb (pierwszy ekran nad banerem)
+  function cbH(){var h=c&&!c.hidden?c.offsetHeight+16:0;d.documentElement.style.setProperty('--cb',h+'px');d.documentElement.classList.toggle('cb-on',h>0);}
+  if(c){cbH();window.addEventListener('resize',cbH);new MutationObserver(cbH).observe(c,{attributes:true,attributeFilter:['hidden']});}
   d.querySelectorAll('[data-cookies]').forEach(function(x){x.addEventListener('click',function(){if(c)c.hidden=false;});});
   function wstaw(m){if(m.querySelector('iframe'))return;var i=d.createElement('iframe'),u=m.getAttribute('data-src');if(m.classList.contains('fb')){var sz=Math.max(180,Math.min(500,Math.floor(m.clientWidth)));u=u.replace('width=500','width='+sz).replace('height=600','height='+Math.max(520,Math.floor(m.clientHeight)));}i.src=u;i.title=m.getAttribute('data-t');i.loading='lazy';i.referrerPolicy='no-referrer-when-downgrade';if(m.classList.contains('fb'))i.setAttribute('scrolling','no');m.appendChild(i);var z=m.querySelector('.mapa-z,.fb-z');if(z)z.remove();}
   function zewn(teraz){
